@@ -6,6 +6,8 @@ import { formatPrice, timeAgo } from "@/lib/format";
 import { updateProductStatus } from "@/app/products/actions";
 import { startChat } from "@/app/chat/actions";
 import { DeleteProductButton } from "@/app/products/_components/DeleteProductButton";
+import { LikeButton } from "@/app/products/_components/LikeButton";
+import { CommentsSection } from "@/app/products/_components/CommentsSection";
 
 const STATUS_LABEL: Record<string, string> = {
   reserved: "예약중",
@@ -42,6 +44,22 @@ export default async function ProductDetailPage({
   if (!product) {
     notFound();
   }
+
+  // 댓글 목록 조회
+  const { data: comments } = await supabase
+    .from("comments")
+    .select("id, user_id, user_email, content, created_at")
+    .eq("product_id", id)
+    .order("created_at", { ascending: true });
+
+  // 좋아요 수 + 내가 좋아요 눌렀는지 조회
+  const { data: likes } = await supabase
+    .from("likes")
+    .select("user_id")
+    .eq("product_id", id);
+
+  const likeCount = likes?.length ?? 0;
+  const isLiked = !!(user && likes?.some((l) => l.user_id === user.id));
 
   const badge = STATUS_LABEL[product.status];
   const isOwner = user?.id === product.seller_id;
@@ -129,14 +147,34 @@ export default async function ProductDetailPage({
             <p className="detail-description">{product.description}</p>
           ) : null}
 
+          {/* 좋아요 버튼 */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--panel-border)" }}>
+            <LikeButton
+              productId={product.id}
+              likeCount={likeCount}
+              isLiked={isLiked}
+              isLoggedIn={!!user}
+            />
+            <span style={{ fontSize: 13, color: "var(--text-dim)" }}>
+              {likeCount > 0 ? `${likeCount}명이 관심 있어요` : "관심 있으면 좋아요를 눌러보세요"}
+            </span>
+          </div>
+
           {!isOwner ? (
-            <form action={startChat.bind(null, product.id, product.seller_id)} style={{ marginTop: 16 }}>
+            <form action={startChat.bind(null, product.id, product.seller_id)} style={{ marginTop: 12 }}>
               <button type="submit" className="btn-primary">
                 💬 판매자에게 문의하기
               </button>
             </form>
           ) : null}
         </div>
+
+        {/* 댓글 섹션 */}
+        <CommentsSection
+          productId={product.id}
+          comments={comments ?? []}
+          currentUserId={user?.id ?? null}
+        />
       </main>
     </div>
   );

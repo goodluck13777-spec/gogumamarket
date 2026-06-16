@@ -192,6 +192,61 @@ export async function updateProduct(productId: string, formData: FormData) {
   redirect(`/products/${productId}?updated=1`);
 }
 
+// ===== 댓글 =====
+
+export async function addComment(productId: string, formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const content = String(formData.get("content") ?? "").trim();
+  if (!content || content.length > 500) redirect(`/products/${productId}`);
+
+  await supabase.from("comments").insert({
+    product_id: productId,
+    user_id: user.id,
+    user_email: user.email ?? "알 수 없음",
+    content,
+  });
+
+  revalidatePath(`/products/${productId}`);
+  redirect(`/products/${productId}`);
+}
+
+export async function deleteComment(commentId: string, productId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  await supabase.from("comments").delete().eq("id", commentId).eq("user_id", user.id);
+
+  revalidatePath(`/products/${productId}`);
+  redirect(`/products/${productId}`);
+}
+
+// ===== 좋아요 =====
+
+export async function toggleLike(productId: string, isLiked: boolean) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  if (isLiked) {
+    await supabase.from("likes").delete().eq("product_id", productId).eq("user_id", user.id);
+  } else {
+    await supabase.from("likes").insert({ product_id: productId, user_id: user.id });
+  }
+
+  revalidatePath(`/products/${productId}`);
+  redirect(`/products/${productId}`);
+}
+
 // 상품 삭제 (Storage 이미지도 함께 삭제)
 export async function deleteProduct(productId: string) {
   const supabase = await createClient();
