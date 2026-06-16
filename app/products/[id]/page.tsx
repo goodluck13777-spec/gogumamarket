@@ -45,6 +45,13 @@ export default async function ProductDetailPage({
     notFound();
   }
 
+  // 판매자 프로필 조회
+  const { data: seller } = await supabase
+    .from("profiles")
+    .select("nickname, bio, avatar_url")
+    .eq("id", product.seller_id)
+    .maybeSingle();
+
   // 댓글 목록 조회
   const { data: comments } = await supabase
     .from("comments")
@@ -136,6 +143,36 @@ export default async function ProductDetailPage({
               </div>
             </>
           ) : null}
+
+          {/* 판매자 프로필 — 클릭하면 글 모아보기로 이동 */}
+          <Link
+            href={`/users/${product.seller_id}`}
+            style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 0", borderBottom: "1px solid rgba(45,36,64,0.08)", marginBottom: 14, textDecoration: "none", color: "inherit" }}
+          >
+            {seller?.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={seller.avatar_url}
+                alt="판매자 프로필"
+                style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "2px solid rgba(255,138,61,0.3)" }}
+              />
+            ) : (
+              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(255,138,61,0.25), rgba(168,85,247,0.25))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>
+                🍠
+              </div>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 14, color: "var(--text)" }}>
+                {seller?.nickname ?? "판매자"}
+              </p>
+              {seller?.bio ? (
+                <p style={{ margin: "2px 0 0", fontSize: 12, color: "var(--text-dim)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {seller.bio}
+                </p>
+              ) : null}
+            </div>
+            <span style={{ fontSize: 12, color: "var(--text-dim)", flexShrink: 0 }}>글 모아보기 →</span>
+          </Link>
 
           <div className="product-card-meta" style={{ marginBottom: 8 }}>
             {product.category ? <span className="product-card-tag">{product.category}</span> : null}

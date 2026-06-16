@@ -19,6 +19,9 @@ export function Header({ user }: { user: User | null }) {
             <Link href="/chat" className="nav-btn nav-btn-ghost">
               💬 채팅
             </Link>
+            <Link href="/profile" className="nav-btn nav-btn-ghost">
+              👤 프로필
+            </Link>
             <Link href="/products/new" className="nav-btn nav-btn-primary">
               ＋ 등록
             </Link>

@@ -279,8 +279,10 @@ body::before {
 .product-card-image {
   width: 100%;
   aspect-ratio: 1;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
+  background: linear-gradient(135deg, rgba(255, 138, 61, 0.08), rgba(168, 85, 247, 0.08));
+  padding: 8px;
 }
 .product-card-image-placeholder {
   width: 100%;
